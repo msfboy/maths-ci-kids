@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#FF5E7E" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Maths CI" />
+    <link rel="icon" type="image/svg+xml" href="./icon-192.svg" />
+    <link rel="apple-touch-icon" href="./icon-192.svg" />
+    <link rel="manifest" href="./manifest.json" />
+    <title>Maths CI - Jeu Éducatif pour Jardin d'Enfants</title>
+  </head>
+  <body>
+    <div id="app">
+      <!-- Top Navigation & Status -->
+      <header class="app-navbar">
+        <div class="brand-section" id="nav-brand">
+          <div class="app-logo-badge">🦁</div>
+          <div class="app-title-group">
+            <h1>Maths CI</h1>
+            <span class="grade-pill">Jardin d'Enfants • Section 1</span>
+          </div>
+        </div>
+
+        <div class="navbar-actions">
+          <div class="stars-pill" id="nav-stars">
+            <span class="star-rotate">⭐</span>
+            <span id="header-star-count">0</span>
+          </div>
+
+          <button class="btn-icon-nav" id="btn-toggle-sound" title="Couper/Activer le son">
+            🔊
+          </button>
+
+          <button class="btn-icon-nav" id="btn-open-parent" title="Espace Parents & Téléphone">
+            👨‍👩‍👧
+          </button>
+        </div>
+      </header>
+
+      <!-- Personalized Child Greeting Banner -->
+      <section class="greeting-banner" id="greeting-banner">
+        <div class="greeting-left">
+          <div class="greeting-avatar" id="child-avatar-display">🦁</div>
+          <div class="greeting-text">
+            <h2>Bonjour <span id="child-name-display">Uriel</span> ! 👋</h2>
+            <p>Prêt pour t'amuser avec les mathématiques ?</p>
+          </div>
+        </div>
+        <button class="btn-quick-play" id="btn-hero-play">Jouer 🚀</button>
+      </section>
+
+      <!-- View Switcher Tabs -->
+      <nav class="main-view-switcher" id="main-view-switcher">
+        <button class="view-tab-btn is-active" data-view="curriculum">
+          <span>📖</span>
+          <span>Le Livre CI</span>
+        </button>
+        <button class="view-tab-btn" data-view="minigames">
+          <span>🎮</span>
+          <span>Mini-Jeux</span>
+        </button>
+        <button class="view-tab-btn" data-view="coloriage">
+          <span>🎨</span>
+          <span>Coloriage</span>
+        </button>
+        <button class="view-tab-btn" data-view="badges">
+          <span>🏅</span>
+          <span>Trophées</span>
+        </button>
+      </nav>
+
+      <!-- Main Dynamic Content Views -->
+      <main id="main-content">
+        <!-- Injected dynamically: Curriculum, Mini-games, or Badges -->
+      </main>
+
+      <!-- Active Game Container (Modal / Full View) -->
+      <div id="game-container" class="game-modal-container" style="display: none;">
+        <!-- Injected by GameEngine -->
+      </div>
+
+      <!-- Parent Space Modal Target -->
+      <div id="parent-modal-container"></div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+    <script>
+      // Register service worker for offline phone usage
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('PWA Service Worker registered:', reg.scope))
+            .catch(err => console.log('Service Worker failed:', err));
+        });
+      }
+    </script>
+  </body>
+</html>

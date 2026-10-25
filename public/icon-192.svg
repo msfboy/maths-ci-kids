@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF512F"/>
+      <stop offset="50%" stop-color="#DD2476"/>
+      <stop offset="100%" stop-color="#8E2DE2"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <!-- Background with rounded corners -->
+  <rect width="512" height="512" rx="110" fill="url(#bg)"/>
+  
+  <!-- Playful elements from the book: shapes, numbers, stars -->
+  <circle cx="130" cy="140" r="50" fill="#FFD166" opacity="0.9" filter="url(#shadow)"/>
+  <rect x="330" y="90" width="90" height="90" rx="20" fill="#06D6A0" opacity="0.9" transform="rotate(15 375 135)" filter="url(#shadow)"/>
+  <polygon points="120,400 70,480 170,480" fill="#4CC9F0" opacity="0.85" transform="translate(0, -60)" filter="url(#shadow)"/>
+  
+  <!-- Number 1 2 3 Badge -->
+  <circle cx="256" cy="256" r="150" fill="#FFFFFF" filter="url(#shadow)"/>
+  
+  <!-- Cheerful Mascot / Kid Face & Numbers -->
+  <text x="256" y="270" font-family="'Comic Sans MS', 'Fredoka', 'Quicksand', sans-serif" font-size="110" font-weight="900" fill="#DD2476" text-anchor="middle" dominant-baseline="middle">1 2 3</text>
+  <text x="256" y="345" font-family="'Fredoka', 'Quicksand', sans-serif" font-size="40" font-weight="bold" fill="#3A0CA3" text-anchor="middle">MATHS CI</text>
+  
+  <!-- Star -->
+  <path d="M 400 370 L 412 405 L 450 405 L 420 425 L 432 460 L 400 440 L 368 460 L 380 425 L 350 405 L 388 405 Z" fill="#FFD166" filter="url(#shadow)"/>
+</svg>

@@ -18,7 +18,11 @@ const defaultState = {
   ],
   settings: {
     sound: true,
-    voice: true
+    voice: true,
+    voiceUri: '',
+    pitch: 1.05,
+    rate: 0.92,
+    volume: 1.0
   }
 };
 
@@ -55,6 +59,14 @@ class StateManager {
 
   setAvatar(avatar) {
     this.data.avatar = avatar;
+    this.save();
+  }
+
+  setVoiceSettings(settings) {
+    if (!this.data.settings) {
+      this.data.settings = {};
+    }
+    this.data.settings = { ...this.data.settings, ...settings };
     this.save();
   }
 

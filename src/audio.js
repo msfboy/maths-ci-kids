@@ -1,4 +1,6 @@
-// Audio and Speech Synthesis Engine for Kindergarten Kids
+// Audio and Speech Synthesis Engine for Kindergarten Kids (Maths CI)
+// Designed for Warm, Human-Like Voice Narration and Organic Acoustic Sound Effects
+import { state } from './state.js';
 
 class SoundEngine {
   constructor() {
@@ -6,6 +8,14 @@ class SoundEngine {
     this.soundEnabled = true;
     this.speechEnabled = true;
     this.selectedVoice = null;
+    this.availableVoices = [];
+    
+    // Default natural preschool teacher settings
+    this.pitch = (state.data.settings && state.data.settings.pitch) || 1.05;
+    this.rate = (state.data.settings && state.data.settings.rate) || 0.92;
+    this.volume = (state.data.settings && state.data.settings.volume) || 1.0;
+    this.savedVoiceUri = (state.data.settings && state.data.settings.voiceUri) || '';
+
     this.initSpeech();
   }
 
@@ -21,15 +31,61 @@ class SoundEngine {
     }
   }
 
+  // Calculate "human warmth & quality score" for a voice
+  scoreVoice(voice) {
+    let score = 0;
+    const name = voice.name.toLowerCase();
+    const uri = (voice.voiceURI || '').toLowerCase();
+
+    // 1. Natural / Neural AI voices (Highest fidelity, indistinguishable from a real human)
+    if (name.includes('natural') || uri.includes('natural') || name.includes('online') || name.includes('neural')) {
+      score += 150;
+    }
+    // 2. Google High Quality neural voices (Android & Chrome)
+    if (name.includes('google') || uri.includes('google')) {
+      score += 110;
+    }
+    // 3. Apple Enhanced / Premium voices (iOS / macOS Siri, Amélie, Thomas)
+    if (name.includes('enhanced') || name.includes('premium') || name.includes('amélior') || name.includes('siri')) {
+      score += 100;
+    }
+    // 4. Renowned warm French voices
+    if (name.includes('denise')) score += 50;
+    if (name.includes('amelie') || name.includes('amélie')) score += 45;
+    if (name.includes('henri')) score += 40;
+    if (name.includes('thomas') || name.includes('audrey') || name.includes('julie')) score += 35;
+    if (name.includes('hortense') || name.includes('paul')) score += 20;
+
+    // French language match
+    if (voice.lang === 'fr-FR') score += 20;
+    else if (voice.lang.startsWith('fr')) score += 10;
+
+    return score;
+  }
+
   initSpeech() {
     if ('speechSynthesis' in window) {
       const updateVoices = () => {
-        const voices = window.speechSynthesis.getVoices();
-        // Look for French voices
-        const frVoices = voices.filter(v => v.lang.startsWith('fr'));
+        const allVoices = window.speechSynthesis.getVoices();
+        // Filter French voices
+        const frVoices = allVoices.filter(v => v.lang && v.lang.toLowerCase().startsWith('fr'));
+        
+        // Sort from most natural/human to standard
+        frVoices.sort((a, b) => this.scoreVoice(b) - this.scoreVoice(a));
+        this.availableVoices = frVoices;
+
+        // Try to restore saved voice
+        if (this.savedVoiceUri) {
+          const match = frVoices.find(v => v.voiceURI === this.savedVoiceUri);
+          if (match) {
+            this.selectedVoice = match;
+            return;
+          }
+        }
+
+        // Otherwise pick the best natural voice
         if (frVoices.length > 0) {
-          // Prefer high-quality voices if possible (Google, Natural, Amelie, etc.)
-          this.selectedVoice = frVoices.find(v => v.name.includes('Google') || v.name.includes('Natural')) || frVoices[0];
+          this.selectedVoice = frVoices[0];
         }
       };
 
@@ -40,21 +96,74 @@ class SoundEngine {
     }
   }
 
+  getFrenchVoices() {
+    if (this.availableVoices.length === 0 && 'speechSynthesis' in window) {
+      const allVoices = window.speechSynthesis.getVoices();
+      const frVoices = allVoices.filter(v => v.lang && v.lang.toLowerCase().startsWith('fr'));
+      frVoices.sort((a, b) => this.scoreVoice(b) - this.scoreVoice(a));
+      this.availableVoices = frVoices;
+    }
+    return this.availableVoices;
+  }
+
+  setVoice(voiceUri) {
+    this.savedVoiceUri = voiceUri;
+    const match = this.availableVoices.find(v => v.voiceURI === voiceUri);
+    if (match) {
+      this.selectedVoice = match;
+    }
+    state.setVoiceSettings({ voiceUri });
+  }
+
+  setPitch(pitch) {
+    this.pitch = parseFloat(pitch) || 1.05;
+    state.setVoiceSettings({ pitch: this.pitch });
+  }
+
+  setRate(rate) {
+    this.rate = parseFloat(rate) || 0.92;
+    state.setVoiceSettings({ rate: this.rate });
+  }
+
+  // Preprocess text to sound more human & spoken naturally for a toddler
+  formatTextForSpeech(text) {
+    if (!text) return '';
+    let t = text;
+
+    // Expand standalone digits 0-6 to gentle spoken words
+    t = t.replace(/\b0\b/g, 'zéro');
+    t = t.replace(/\b1\b/g, 'un');
+    t = t.replace(/\b2\b/g, 'deux');
+    t = t.replace(/\b3\b/g, 'trois');
+    t = t.replace(/\b4\b/g, 'quatre');
+    t = t.replace(/\b5\b/g, 'cinq');
+    t = t.replace(/\b6\b/g, 'six');
+
+    // Add breathing commas for smooth cadence
+    t = t.replace(/([?!])\s*/g, '$1 , ');
+    t = t.replace(/\.\.\./g, ' , ');
+
+    return t;
+  }
+
   speak(text) {
     if (!this.speechEnabled || !('speechSynthesis' in window)) return;
     
-    // Stop current speech to avoid backlog
+    // Cancel current speech to prevent queue build up
     window.speechSynthesis.cancel();
 
-    const utterance = new SpeechSynthesisUtterance(text);
+    const formattedText = this.formatTextForSpeech(text);
+    const utterance = new SpeechSynthesisUtterance(formattedText);
     utterance.lang = 'fr-FR';
-    utterance.rate = 0.92; // Slightly slower, very articulate for preschool kids
-    utterance.pitch = 1.15; // Cheerful friendly tone
+    utterance.rate = this.rate;
+    utterance.pitch = this.pitch;
+    utterance.volume = this.volume;
 
     if (this.selectedVoice) {
       utterance.voice = this.selectedVoice;
     }
 
+    // Workaround for mobile browsers occasionally hanging speechSynthesis
     window.speechSynthesis.speak(utterance);
   }
 
@@ -64,87 +173,116 @@ class SoundEngine {
     }
   }
 
-  playTone(freq, type = 'sine', duration = 0.2, gainValue = 0.2, startDelay = 0) {
+  // --------------------------------------------------------------------------
+  // Organic Acoustic Sound Effects (Web Audio API with Warm Filtering)
+  // --------------------------------------------------------------------------
+
+  // Play a soft acoustic tone with harmonic overtones and lowpass warmth (like a wooden xylophone)
+  playAcousticTone(freq, duration = 0.25, gainValue = 0.22, startDelay = 0) {
     if (!this.soundEnabled) return;
     try {
       this.initContext();
       if (!this.ctx) return;
 
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
+      const now = this.ctx.currentTime + startDelay;
 
-      osc.type = type;
-      osc.frequency.setValueAtTime(freq, this.ctx.currentTime + startDelay);
+      // Warm low-pass acoustic filter to remove harsh electronic frequencies
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(2600, now);
+      filter.Q.setValueAtTime(1.5, now);
 
-      gain.gain.setValueAtTime(gainValue, this.ctx.currentTime + startDelay);
-      gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + startDelay + duration);
+      const masterGain = this.ctx.createGain();
+      masterGain.gain.setValueAtTime(gainValue, now);
+      masterGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
 
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
+      // Fundamental oscillator
+      const osc1 = this.ctx.createOscillator();
+      osc1.type = 'triangle';
+      osc1.frequency.setValueAtTime(freq, now);
 
-      osc.start(this.ctx.currentTime + startDelay);
-      osc.stop(this.ctx.currentTime + startDelay + duration);
+      // Soft harmonic overtone for marimba/kalimba wooden warmth
+      const osc2 = this.ctx.createOscillator();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(freq * 2, now);
+      const gain2 = this.ctx.createGain();
+      gain2.gain.setValueAtTime(0.35, now);
+
+      osc1.connect(masterGain);
+      osc2.connect(gain2);
+      gain2.connect(masterGain);
+
+      masterGain.connect(filter);
+      filter.connect(this.ctx.destination);
+
+      osc1.start(now);
+      osc2.start(now);
+      osc1.stop(now + duration);
+      osc2.stop(now + duration);
     } catch (e) {
-      console.warn('Audio playTone error', e);
+      console.warn('playAcousticTone error', e);
     }
   }
 
-  // Play bubbly tap/pop sound
+  // Play bubbly tap/pop sound with warm pitch decay
   playPop() {
     if (!this.soundEnabled) return;
     try {
       this.initContext();
       if (!this.ctx) return;
+
+      const now = this.ctx.currentTime;
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(400, this.ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.08);
 
-      gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.08);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(320, now);
+      osc.frequency.exponentialRampToValueAtTime(740, now + 0.08);
+
+      gain.gain.setValueAtTime(0.25, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
 
       osc.connect(gain);
       gain.connect(this.ctx.destination);
-      osc.start();
-      osc.stop(this.ctx.currentTime + 0.09);
+      osc.start(now);
+      osc.stop(now + 0.09);
     } catch (e) {}
   }
 
-  // Bright cheerful success chime (C5 - E5 - G5 - C6)
+  // Warm cheerful marimba success chime (Do - Mi - Sol - Do)
   playSuccess() {
     const notes = [523.25, 659.25, 783.99, 1046.50];
     notes.forEach((freq, idx) => {
-      this.playTone(freq, 'triangle', 0.25, 0.25, idx * 0.08);
+      this.playAcousticTone(freq, 0.35, 0.24, idx * 0.07);
     });
   }
 
-  // Gentle boop for trying again
+  // Gentle encouraging descending wooden tone
   playTryAgain() {
-    this.playTone(280, 'sine', 0.15, 0.2, 0);
-    this.playTone(240, 'sine', 0.22, 0.2, 0.12);
+    this.playAcousticTone(330, 0.22, 0.18, 0);
+    this.playAcousticTone(260, 0.30, 0.18, 0.11);
   }
 
-  // Twinkling star sound
+  // Twinkling music box star sound
   playStar() {
     const starNotes = [880, 1046.5, 1318.51, 1567.98, 2093];
     starNotes.forEach((freq, idx) => {
-      this.playTone(freq, 'sine', 0.2, 0.18, idx * 0.06);
+      this.playAcousticTone(freq, 0.28, 0.18, idx * 0.06);
     });
   }
 
-  // Grand Fanfare when completing a level
+  // Grand celebratory fanfare with rich acoustic chords
   playFanfare() {
     const melody = [
-      { f: 523.25, d: 0.12, t: 0 },
-      { f: 659.25, d: 0.12, t: 0.12 },
-      { f: 783.99, d: 0.12, t: 0.24 },
-      { f: 1046.50, d: 0.4, t: 0.36 },
-      { f: 880, d: 0.15, t: 0.6 },
-      { f: 1046.50, d: 0.6, t: 0.78 }
+      { f: 523.25, d: 0.18, t: 0 },
+      { f: 659.25, d: 0.18, t: 0.12 },
+      { f: 783.99, d: 0.20, t: 0.24 },
+      { f: 1046.50, d: 0.45, t: 0.38 },
+      { f: 880, d: 0.20, t: 0.62 },
+      { f: 1046.50, d: 0.70, t: 0.82 }
     ];
     melody.forEach(item => {
-      this.playTone(item.f, 'triangle', item.d, 0.3, item.t);
+      this.playAcousticTone(item.f, item.d, 0.28, item.t);
     });
   }
 
@@ -152,7 +290,7 @@ class SoundEngine {
   playCount(num) {
     const baseFreqs = [440, 493.88, 554.37, 587.33, 659.25, 739.99, 880];
     const freq = baseFreqs[Math.min(num - 1, baseFreqs.length - 1)] || 440;
-    this.playTone(freq, 'triangle', 0.2, 0.25);
+    this.playAcousticTone(freq, 0.28, 0.26);
   }
 }
 

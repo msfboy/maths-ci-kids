@@ -31,9 +31,10 @@ export class ParentDashboard {
         </div>
 
         <div class="parent-tabs-nav">
-          <button class="parent-tab-btn is-active" data-tab="mobile">📱 Mettre sur le Téléphone</button>
+          <button class="parent-tab-btn is-active" data-tab="mobile">📱 Téléphone</button>
+          <button class="parent-tab-btn" data-tab="voice">🎙️ Voix & Son Humain</button>
           <button class="parent-tab-btn" data-tab="progress">📊 Progrès d’Uriel</button>
-          <button class="parent-tab-btn" data-tab="pedagogy">📘 Guide Pédagogique (CI)</button>
+          <button class="parent-tab-btn" data-tab="pedagogy">📘 Guide Pédagogique</button>
         </div>
 
         <div class="parent-tab-content" id="parent-tab-body">
@@ -58,6 +59,8 @@ export class ParentDashboard {
       tabs.forEach(t => t.classList.toggle('is-active', t.dataset.tab === tabId));
       if (tabId === 'mobile') {
         this.renderMobileTab(tabBody);
+      } else if (tabId === 'voice') {
+        this.renderVoiceTab(tabBody);
       } else if (tabId === 'progress') {
         this.renderProgressTab(tabBody, totalStars, completedActsCount, totalCurriculumActivities);
       } else if (tabId === 'pedagogy') {
@@ -253,4 +256,191 @@ export class ParentDashboard {
       </div>
     `;
   }
+
+  renderVoiceTab(container) {
+    const voices = sounds.getFrenchVoices();
+    const currentVoice = sounds.selectedVoice;
+
+    const getVoiceBadge = (v) => {
+      const name = (v.name || '').toLowerCase();
+      if (name.includes('natural') || name.includes('online') || name.includes('neural')) {
+        return '<span class="voice-badge voice-badge-natural">🌟 Voix Naturelle IA</span>';
+      }
+      if (name.includes('google')) {
+        return '<span class="voice-badge voice-badge-google">🌐 Google HD</span>';
+      }
+      if (name.includes('enhanced') || name.includes('amélior') || name.includes('premium')) {
+        return '<span class="voice-badge voice-badge-apple">🍏 Voix Améliorée</span>';
+      }
+      return '<span class="voice-badge voice-badge-standard">🔊 Voix Système</span>';
+    };
+
+    container.innerHTML = `
+      <div class="voice-tab-wrapper">
+        <div class="voice-hero-card">
+          <div class="voice-hero-icon">🎙️</div>
+          <div class="voice-hero-text">
+            <h3>Personnaliser la Voix & le Ton Humain</h3>
+            <p>Choisissez la voix la plus chaleureuse et naturelle pour accompagner Uriel dans ses découvertes mathématiques.</p>
+          </div>
+        </div>
+
+        <div class="voice-current-status">
+          <div class="status-left">
+            <span class="status-label">Voix active en ce moment :</span>
+            <strong class="current-voice-name">${currentVoice ? currentVoice.name : 'Voix par défaut'}</strong>
+          </div>
+          ${currentVoice ? getVoiceBadge(currentVoice) : ''}
+        </div>
+
+        <div class="voice-form-card">
+          <div class="voice-field-group">
+            <label for="voice-picker">
+              <strong>🗣️ Choisir une voix française installée sur cet appareil :</strong>
+            </label>
+            ${voices.length > 0 ? `
+              <select id="voice-picker" class="voice-select-box">
+                ${voices.map(v => {
+                  const isSelected = (currentVoice && v.voiceURI === currentVoice.voiceURI) ? 'selected' : '';
+                  let prefix = '🔊';
+                  const lower = v.name.toLowerCase();
+                  if (lower.includes('natural') || lower.includes('online')) prefix = '🌟 [Très Naturelle]';
+                  else if (lower.includes('google')) prefix = '🌐 [Google HD]';
+                  else if (lower.includes('enhanced') || lower.includes('amélior')) prefix = '✨ [Améliorée]';
+                  return `<option value="${v.voiceURI}" ${isSelected}>${prefix} ${v.name} (${v.lang})</option>`;
+                }).join('')}
+              </select>
+            ` : `
+              <p class="no-voices-notice">⚠️ Chargement des voix du système en cours... Si aucune voix n'apparaît, cliquez sur "Rafraîchir les voix".</p>
+              <button class="btn-bounce btn-secondary" id="btn-refresh-voices">🔄 Rafraîchir les voix</button>
+            `}
+          </div>
+
+          <div class="voice-slider-group">
+            <div class="slider-header-row">
+              <label for="voice-pitch">
+                <strong>🎵 Tonalité (Chaleur de la voix) :</strong>
+              </label>
+              <span class="slider-value-display" id="pitch-display">${sounds.pitch.toFixed(2)} (${sounds.pitch >= 1.02 ? 'Douce & Enfantine' : 'Posée'})</span>
+            </div>
+            <input type="range" id="voice-pitch" min="0.80" max="1.30" step="0.05" value="${sounds.pitch}" class="voice-range-slider" />
+            <div class="slider-labels-row">
+              <span>Voix grave (0.80)</span>
+              <span class="ideal-marker">⭐ 1.05 Recommandé</span>
+              <span>Voix aigüe (1.30)</span>
+            </div>
+          </div>
+
+          <div class="voice-slider-group">
+            <div class="slider-header-row">
+              <label for="voice-rate">
+                <strong>⏱️ Vitesse d'élocution (Cadence) :</strong>
+              </label>
+              <span class="slider-value-display" id="rate-display">${sounds.rate.toFixed(2)} (${sounds.rate <= 0.95 ? 'Calme & Articulé' : 'Normale'})</span>
+            </div>
+            <input type="range" id="voice-rate" min="0.75" max="1.15" step="0.05" value="${sounds.rate}" class="voice-range-slider" />
+            <div class="slider-labels-row">
+              <span>Lente & Pédagogique (0.75)</span>
+              <span class="ideal-marker">⭐ 0.92 Recommandé</span>
+              <span>Rapide (1.15)</span>
+            </div>
+          </div>
+
+          <div class="voice-actions-row">
+            <button class="btn-bounce btn-primary" id="btn-test-voice">
+              ▶ Écouter cette voix
+            </button>
+            <button class="btn-bounce btn-secondary" id="btn-reset-voice-defaults">
+              ✨ Réglage recommandé (Enfant)
+            </button>
+          </div>
+        </div>
+
+        <div class="human-voice-guide-card">
+          <h4>💡 Astuces pour avoir la voix la plus humaine possible :</h4>
+          <ul class="voice-guide-list">
+            <li>
+              <strong>🤖 Sur Android (Chrome / Smartphone) :</strong>
+              Allez dans <em>Paramètres ➔ Accessibilité ➔ Synthèse vocale ➔ Moteur Google</em> et activez les <strong>voix françaises haute définition</strong>.
+            </li>
+            <li>
+              <strong>🍏 Sur iPhone / iPad (Safari) :</strong>
+              Allez dans <em>Réglages ➔ Accessibilité ➔ Contenu énoncé ➔ Voix ➔ Français</em> et téléchargez gratuitement <strong>Thomas (Amélioré)</strong> ou <strong>Amélie (Améliorée)</strong>.
+            </li>
+            <li>
+              <strong>💻 Sur PC / Windows :</strong>
+              Microsoft Edge et Windows 11 proposent la voix <strong>Microsoft Denise Online (Natural)</strong> qui sonne exactement comme une vraie institutrice !
+            </li>
+          </ul>
+        </div>
+      </div>
+    `;
+
+    // Event listeners
+    const voicePicker = container.querySelector('#voice-picker');
+    if (voicePicker) {
+      voicePicker.onchange = () => {
+        sounds.setVoice(voicePicker.value);
+        sounds.playPop();
+        // Speak sample
+        sounds.speak(`Bonjour Uriel ! J'adore cette voix pour nos mathématiques.`);
+        // Update active name
+        const activeNameEl = container.querySelector('.current-voice-name');
+        if (activeNameEl && sounds.selectedVoice) {
+          activeNameEl.textContent = sounds.selectedVoice.name;
+        }
+      };
+    }
+
+    const refreshBtn = container.querySelector('#btn-refresh-voices');
+    if (refreshBtn) {
+      refreshBtn.onclick = () => {
+        sounds.initSpeech();
+        this.renderVoiceTab(container);
+      };
+    }
+
+    const pitchSlider = container.querySelector('#voice-pitch');
+    const pitchDisplay = container.querySelector('#pitch-display');
+    if (pitchSlider && pitchDisplay) {
+      pitchSlider.oninput = () => {
+        const val = parseFloat(pitchSlider.value);
+        sounds.setPitch(val);
+        pitchDisplay.textContent = `${val.toFixed(2)} (${val >= 1.02 ? 'Douce & Enfantine' : 'Posée'})`;
+      };
+    }
+
+    const rateSlider = container.querySelector('#voice-rate');
+    const rateDisplay = container.querySelector('#rate-display');
+    if (rateSlider && rateDisplay) {
+      rateSlider.oninput = () => {
+        const val = parseFloat(rateSlider.value);
+        sounds.setRate(val);
+        rateDisplay.textContent = `${val.toFixed(2)} (${val <= 0.95 ? 'Calme & Articulé' : 'Normale'})`;
+      };
+    }
+
+    const testBtn = container.querySelector('#btn-test-voice');
+    if (testBtn) {
+      testBtn.onclick = () => {
+        sounds.playSuccess();
+        sounds.speak(`Bonjour Uriel ! Regarde bien les jolis bonbons et les tomates. Combien y en a-t-il ?`);
+      };
+    }
+
+    const resetDefaultsBtn = container.querySelector('#btn-reset-voice-defaults');
+    if (resetDefaultsBtn) {
+      resetDefaultsBtn.onclick = () => {
+        sounds.setPitch(1.05);
+        sounds.setRate(0.92);
+        if (pitchSlider) pitchSlider.value = '1.05';
+        if (rateSlider) rateSlider.value = '0.92';
+        if (pitchDisplay) pitchDisplay.textContent = '1.05 (Douce & Enfantine)';
+        if (rateDisplay) rateDisplay.textContent = '0.92 (Calme & Articulé)';
+        sounds.playPop();
+        sounds.speak(`Réglages optimaux rétablis pour Uriel !`);
+      };
+    }
+  }
 }
+
